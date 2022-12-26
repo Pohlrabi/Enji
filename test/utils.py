@@ -11,9 +11,9 @@ def get_current_time():
 
 #Initialize creds and database link
 def initialize():
-    with open("creds_path.json", "r") as f :
+    with open("creds.json", "r") as f :
         cred = json.load(f)
-        cred = cred["creds_path"]
+        cred = cred["path"]
     cred = credentials.Certificate(cred)
     firebase_admin.initialize_app(cred, {
         'databaseURL': 'https://enji-9fe2b-default-rtdb.firebaseio.com/'
@@ -26,15 +26,20 @@ def receive_msg(ref):
     return data
 
 def send_msg(ref, data, room):
-    ref.child(room).set(data)
-
-def set_data(user, msg, room):
     time = get_current_time()
+    ref.child(room).child(time).set(data)
+
+def set_data(user, msg, room="2"):
     data = {
         "user": user,
-        "time": time,
         "message": msg,
     }
     return data, room
 
-
+def get_user():
+    try:
+        with open("user.json", "r") as f:
+            data = json.load(f)
+            return data["user"]
+    except:
+        pass

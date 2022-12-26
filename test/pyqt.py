@@ -1,5 +1,8 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QLabel, QLineEdit, QTextEdit, QHBoxLayout
 import json
+import utils
+from firebase_admin import db
+
 
 class Creds(QWidget):
     def __init__(self):
@@ -25,12 +28,11 @@ class Creds(QWidget):
         # Show a file or directory selection dialog
         path, _ = QFileDialog.getOpenFileName()
         try :
-            with open("creds_path.json", "w") as f:
-                data = {"creds_path":path}
-                json.dump(data,f)
+            with open("creds.json","w") as f:
+                path = {"path":path}
+                json.dump(path,f)
         except :
             print("Error!")
-        print(path) 
 
 class Login(QWidget):
     def __init__(self):
@@ -53,16 +55,24 @@ class Login(QWidget):
         self.submit_button.move(20, 90)
         self.submit_button.resize(280, 30)
         self.layout.addWidget(self.submit_button)
+        self.submit_button.clicked.connect(self.name_submit)
+
+    def name_submit(self):
+        print(self.name_edit.text())
+        try:
+            with open("user.json", "w") as f:
+                user = {"user":self.name_edit.text()}
+                json.dump(user,f)
+        except:
+            print("name error?")
+
 
 class Chat(QWidget):
-    def __init__(self):
+    def __init__(self, ref):
         super().__init__()
-
+        self.ref = ref
         # Create a vertical layout to hold the scroll area, input field, and button
         self.layout = QVBoxLayout(self)
-
-        # Set the size and position of the window
-
         
         # Create the scroll area and set its widget to be a text edit
         self.scroll_area = QTextEdit()
@@ -85,33 +95,64 @@ class Chat(QWidget):
         # Add the input layout to the main layout
         self.layout.addLayout(input_layout)
 
+        # Add listener
+        db.reference("/chat").child("2").listen(self.listener)
+    def listener(self,event):
+        print(event.data)
+        self.room_data = event.data
+        try:
+            for key, data in self.room_data.items():
+                self.scroll_area.append(data["user"] + " : " + data["message"] + "\n")
+        except:
+            self.scroll_area.append(self.room_data["user"] + " : " + self.room_data["message"] + "\n")
     def on_enter(self):
         # When the input field's return key is pressed, get the text from the input field and append it to the text edit
         input_text = self.input_field.text()
-        self.scroll_area.append(input_text + '\n')
+        data, room = utils.set_data(user=utils.get_user(), msg=input_text)
+        utils.send_msg(self.ref,data,room)
         self.input_field.clear()
 
     def on_click(self):
         # When the button is clicked, get the text from the input field and append it to the text edit
         input_text = self.input_field.text()
-        self.scroll_area.append(input_text + '\n')
+        data, room = utils.set_data(user=utils.get_user(), msg=input_text)
+        utils.send_msg(self.ref,data,room)
         self.input_field.clear()
 
 class MainWidget(QWidget):
-    def __init__(self):
+    def __init__(self, ref):
         super().__init__()
-
+        self.ref = ref
         # Set up the layout for the main widget
         self.layout = QVBoxLayout(self)
         # Create the widgets and add them to the layout
-        self.widget1 = Creds()
-        self.widget2 = Login()
-        self.widget3 = Chat()
-        self.layout.addWidget(self.widget1)
+
+        try:
+            with open("creds.json", "r") as f:
+                with open("user.json", "r") as k: 
+                    if ("user" in json.load(k)) :
+                        print("hey")
+                        self.widget3 = Chat(self.ref)
+                        print("hey again")
+                        self.switch_widgets3()
+                        print("wtf")
+                    elif ("path" in json.load(f)) :
+                        self.widget2 = Login()
+                        self.widget3 = Chat(self.ref)
+                        self.switch_widgets2()
+        except:
+            self.widget1 = Creds()
+            self.widget2 = Login()
+            self.widget3 = Chat(self.ref)
+            self.layout.addWidget(self.widget1)
+
 
         # Connect the "clicked" signal of the buttons to the switch_widgets slot
-        self.widget1.confirm.clicked.connect(self.switch_widgets2)
-        self.widget2.submit_button.clicked.connect(self.switch_widgets3)
+        try :
+            self.widget1.confirm.clicked.connect(self.switch_widgets2)
+            self.widget2.submit_button.clicked.connect(self.switch_widgets3)
+        except:
+            pass
 
     def switch_widgets2(self):
         # Remove the current widget from the layout
@@ -124,9 +165,11 @@ class MainWidget(QWidget):
     
     def switch_widgets3(self):
         # Remove the current widget from the layout
-        current_widget = self.layout.takeAt(0).widget()
-        current_widget.setParent(None)
-
+        try:
+            current_widget = self.layout.takeAt(0).widget()
+            current_widget.setParent(None)
+        except:
+            pass
         self.layout.addWidget(self.widget3)
         self.setGeometry(100, 100, 600, 400)
         self.setWindowTitle("Chat")
