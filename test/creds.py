@@ -13,7 +13,7 @@ def browse_file():
   file_path = filedialog.askopenfilename()
   success = tk.Label(root, text=file_path)
   file_path = {"creds_path":file_path}
-  with open("test\creds_path.json", "w") as f:
+  with open("creds_path.json", "w") as f:
     json.dump(file_path,f)
   success.pack()
   exit = tk.Label(root, text="Automatical exit after 3s")

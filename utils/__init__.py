@@ -11,3 +11,4 @@ def initialize():
     firebase_admin.initialize_app(cred, {
         'databaseURL': 'https://enji-9fe2b-default-rtdb.firebaseio.com/'
     })
+    ref = db.reference("/chat")
