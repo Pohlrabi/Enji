@@ -7,7 +7,7 @@ if __name__ == "__main__":
     app = QApplication([])
     if not utils.get_info("path"):
         main_widget = pyqt.Creds()
-    if not utils.get_info("user"):
+    elif not utils.get_info("user"):
         main_widget = pyqt.Login()
     else : 
         main_widget = pyqt.Chat()

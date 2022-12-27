@@ -1,15 +1,10 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QLabel, QLineEdit, QTextEdit, QHBoxLayout
-import json
-import utils
-from firebase_admin import db
+import utils, pyqt
+from PyQt5.QtWidgets import QApplication
+import sys
+import pyqt
 
-class creds(QWidget):
-    """This is the widget to specify our credentials location/path"""
-    def __init__(self):
-        super().__init__()
-        self.initUI()
-    
-    def initUI(self) :
-        layout = QVBoxLayout()
-        
-        return
+if __name__ == "__main__":
+    app = QApplication([])
+    main_widget = pyqt.Creds()
+    main_widget.show()
+    app.exec_()
