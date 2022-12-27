@@ -3,10 +3,13 @@ from PyQt5.QtWidgets import QApplication
 import sys
 import pyqt
 
-ref = utils.initialize()
-
 if __name__ == "__main__":
     app = QApplication([])
-    main_widget = pyqt.MainWidget(ref)
+    if not utils.get_info("path"):
+        main_widget = pyqt.Creds()
+    if not utils.get_info("user"):
+        main_widget = pyqt.Login()
+    else : 
+        main_widget = pyqt.Chat()
     main_widget.show()
     app.exec_()

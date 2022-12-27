@@ -11,9 +11,7 @@ def get_current_time():
 
 #Initialize creds and database link
 def initialize():
-    with open("creds.json", "r") as f :
-        cred = json.load(f)
-        cred = cred["path"]
+    cred = get_info("path")
     cred = credentials.Certificate(cred)
     firebase_admin.initialize_app(cred, {
         'databaseURL': 'https://enji-9fe2b-default-rtdb.firebaseio.com/'
@@ -36,10 +34,18 @@ def set_data(user, msg, room="2"):
     }
     return data, room
 
-def get_user():
+def get_info(type):
     try:
-        with open("user.json", "r") as f:
+        with open("{}.json".format(type), "r") as f:
             data = json.load(f)
-            return data["user"]
+            return data[type]
     except:
-        pass
+        return None
+def write_info(type, info):
+    try:
+        with open("{}.json".format(type), "w") as f:
+            data = {"{}".format(type) : info}
+            json.dump(data,f)
+    except:
+        raise Exception
+

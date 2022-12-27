@@ -8,6 +8,8 @@ class Creds(QWidget):
     def __init__(self):
         super().__init__()
 
+        self.w = None
+
         # Set up the layout and add a button
         self.layout = QVBoxLayout(self)
         self.button = QPushButton("Select a file or directory")
@@ -21,22 +23,24 @@ class Creds(QWidget):
         # Add confirm button
         self.confirm = QPushButton("Confirm")
         self.layout.addWidget(self.confirm)
-
+        self.confirm.clicked.connect(self.confirms)
         self.setWindowTitle("Credential")
 
     def select_path(self):
         # Show a file or directory selection dialog
         path, _ = QFileDialog.getOpenFileName()
-        try :
-            with open("creds.json","w") as f:
-                path = {"path":path}
-                json.dump(path,f)
-        except :
-            print("Error!")
+        utils.write_info("path", path)
+    
+    def confirms(self):
+        self.w = Login()
+        self.w.show()
+        self.close()
 
 class Login(QWidget):
     def __init__(self):
         super().__init__()
+
+        self.w = None
 
         # Create a label to prompt the user to enter their name
         self.layout = QVBoxLayout()
@@ -56,20 +60,21 @@ class Login(QWidget):
         self.submit_button.resize(280, 30)
         self.layout.addWidget(self.submit_button)
         self.submit_button.clicked.connect(self.name_submit)
+        self.submit_button.clicked.connect(self.confirms)
 
     def name_submit(self):
-        print(self.name_edit.text())
-        try:
-            with open("user.json", "w") as f:
-                user = {"user":self.name_edit.text()}
-                json.dump(user,f)
-        except:
-            print("name error?")
+        utils.write_info("user", self.name_edit.text())
+
+    def confirms(self):
+        self.w = Chat()
+        self.w.show()
+        self.close()
 
 
 class Chat(QWidget):
-    def __init__(self, ref):
+    def __init__(self):
         super().__init__()
+        ref = utils.initialize()
         self.ref = ref
         # Create a vertical layout to hold the scroll area, input field, and button
         self.layout = QVBoxLayout(self)
@@ -100,6 +105,8 @@ class Chat(QWidget):
     def listener(self,event):
         print(event.data)
         self.room_data = event.data
+        if event.data == None :
+            return
         try:
             for key, data in self.room_data.items():
                 self.scroll_area.append(data["user"] + " : " + data["message"] + "\n")
@@ -108,75 +115,24 @@ class Chat(QWidget):
     def on_enter(self):
         # When the input field's return key is pressed, get the text from the input field and append it to the text edit
         input_text = self.input_field.text()
-        data, room = utils.set_data(user=utils.get_user(), msg=input_text)
+        data, room = utils.set_data(user=utils.get_info("user"), msg=input_text)
         utils.send_msg(self.ref,data,room)
         self.input_field.clear()
 
     def on_click(self):
         # When the button is clicked, get the text from the input field and append it to the text edit
         input_text = self.input_field.text()
-        data, room = utils.set_data(user=utils.get_user(), msg=input_text)
+        data, room = utils.set_data(user=utils.get_info("user"), msg=input_text)
         utils.send_msg(self.ref,data,room)
         self.input_field.clear()
 
-class MainWidget(QWidget):
-    def __init__(self, ref):
-        super().__init__()
-        self.ref = ref
-        # Set up the layout for the main widget
-        self.layout = QVBoxLayout(self)
-        # Create the widgets and add them to the layout
-
-        try:
-            with open("creds.json", "r") as f:
-                with open("user.json", "r") as k: 
-                    if ("user" in json.load(k)) :
-                        print("hey")
-                        self.widget3 = Chat(self.ref)
-                        print("hey again")
-                        self.switch_widgets3()
-                        print("wtf")
-                    elif ("path" in json.load(f)) :
-                        self.widget2 = Login()
-                        self.widget3 = Chat(self.ref)
-                        self.switch_widgets2()
-        except:
-            self.widget1 = Creds()
-            self.widget2 = Login()
-            self.widget3 = Chat(self.ref)
-            self.layout.addWidget(self.widget1)
-
-
-        # Connect the "clicked" signal of the buttons to the switch_widgets slot
-        try :
-            self.widget1.confirm.clicked.connect(self.switch_widgets2)
-            self.widget2.submit_button.clicked.connect(self.switch_widgets3)
-        except:
-            pass
-
-    def switch_widgets2(self):
-        # Remove the current widget from the layout
-        current_widget = self.layout.takeAt(0).widget()
-        current_widget.setParent(None)
-
-        self.layout.addWidget(self.widget2)
-        self.setGeometry(300, 300, 340, 150)
-        self.setWindowTitle("Login")
-    
-    def switch_widgets3(self):
-        # Remove the current widget from the layout
-        try:
-            current_widget = self.layout.takeAt(0).widget()
-            current_widget.setParent(None)
-        except:
-            pass
-        self.layout.addWidget(self.widget3)
-        self.setGeometry(100, 100, 600, 400)
-        self.setWindowTitle("Chat")
-
-
 if __name__ == "__main__":
     app = QApplication([])
-    main_widget = MainWidget()
+    if not utils.get_info("path"):
+        main_widget = Creds()
+    if not utils.get_info("user"):
+        main_widget = Login()
+    else : 
+        main_widget = Chat()
     main_widget.show()
     app.exec_()

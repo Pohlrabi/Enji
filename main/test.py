@@ -1,12 +1,15 @@
-import firebase_admin
-from firebase_admin import credentials, db
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QLabel, QLineEdit, QTextEdit, QHBoxLayout
+import json
 import utils
+from firebase_admin import db
 
-# Set up the Firebase Admin SDK with your service account
-ref = utils.initialize()
-
-# Get a reference to the database root
-def listener(event):
-    return  # new data at /reference/event.path. None if deleted
-
-db.reference('/').listen(listener)
+class creds(QWidget):
+    """This is the widget to specify our credentials location/path"""
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+    
+    def initUI(self) :
+        layout = QVBoxLayout()
+        
+        return
